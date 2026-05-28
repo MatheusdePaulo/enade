@@ -1,0 +1,13 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Remove /public/ da URL se o usuário digitar diretamente
+    RewriteCond %{THE_REQUEST} \s/+public(/|\s) [NC]
+    RewriteRule ^public/(.*)$ /$1 [R=301,L,NE]
+
+    # Redireciona tudo para public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
