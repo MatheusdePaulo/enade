@@ -59,4 +59,9 @@ Route::get('/setup-admin', function () {
     return 'Admin criado com sucesso!';
 });
 
+Route::get('/run-seeder', function () {
+    \Artisan::call('db:seed', ['--force' => true]);
+    return 'Seeder executado!';
+});
+
 require __DIR__.'/auth.php';
