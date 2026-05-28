@@ -79,4 +79,13 @@ Route::get('/clear-cache', function () {
     \Artisan::call('optimize:clear');
     return 'Cache do Laravel limpo com sucesso!';
 });
+
+Route::get('/debug-db', function () {
+    return response()->json([
+        'total_questoes_no_banco' => \DB::table('questions')->count(),
+        'total_cursos_no_banco' => \DB::table('courses')->count(),
+        'primeiras_questoes' => \App\Models\Question::take(5)->get()
+    ]);
+});
+
 require __DIR__.'/auth.php';
