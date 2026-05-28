@@ -75,4 +75,8 @@ Route::get('/run-seeder', function () {
     return 'Seeder executado!';
 });
 
+Route::get('/clear-cache', function () {
+    \Artisan::call('optimize:clear');
+    return 'Cache do Laravel limpo com sucesso!';
+});
 require __DIR__.'/auth.php';
