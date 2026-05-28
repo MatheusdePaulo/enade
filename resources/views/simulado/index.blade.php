@@ -70,7 +70,7 @@
                             Quantidade de questões
                         </label>
                         <div class="grid grid-cols-4 gap-3">
-                            @foreach([5, 10, 20, 30] as $n)
+                            @foreach([5, 10, 20, 40] as $n)
                                 <label class="relative cursor-pointer">
                                     <input type="radio" name="quantidade" value="{{ $n }}" class="sr-only peer" @if($n === 10) checked @endif>
                                     <div class="text-center py-3 rounded-xl border-2 border-slate-200 text-slate-600 text-sm font-semibold
