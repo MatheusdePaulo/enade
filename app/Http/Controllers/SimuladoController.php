@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Alternative;
 use App\Models\Course;
 use App\Models\Question;
+use App\Models\SimuladoHistory;
 use Illuminate\Http\Request;
 
 class SimuladoController extends Controller
@@ -29,15 +29,9 @@ class SimuladoController extends Controller
 
         $query = Question::with('alternatives');
 
-        if ($request->filled('course_id')) {
-            $query->where('course_id', $request->course_id);
-        }
-        if ($request->filled('component')) {
-            $query->where('component', $request->component);
-        }
-        if ($request->filled('year')) {
-            $query->where('year', $request->year);
-        }
+        if ($request->filled('course_id'))  $query->where('course_id', $request->course_id);
+        if ($request->filled('component'))  $query->where('component',  $request->component);
+        if ($request->filled('year'))       $query->where('year',        $request->year);
 
         $questions = $query->inRandomOrder()->limit($request->quantidade)->get();
 
@@ -85,29 +79,65 @@ class SimuladoController extends Controller
         return view('simulado.show', compact('question', 'index', 'total', 'remaining', 'answers', 'questionIds'));
     }
 
+    // ── PONTO 2: Fluxo corrigido ──────────────────────────────
     public function responder(Request $request, int $index)
     {
         $request->validate(['alternative_id' => 'required|exists:alternatives,id']);
 
         $simulado = session('simulado');
-
         if (!$simulado) {
             return redirect()->route('simulado.index');
         }
 
+        // Persiste a resposta na sessão
         $simulado['answers'][$simulado['question_ids'][$index]] = $request->alternative_id;
         session(['simulado' => $simulado]);
 
-        $nextIndex = $index + 1;
-        $total     = count($simulado['question_ids']);
+        $questionIds = $simulado['question_ids'];
+        $answers     = $simulado['answers'];
+        $total       = count($questionIds);
 
-        if ($nextIndex >= $total) {
+        // Coleta índices de questões ainda sem resposta
+        $pending = [];
+        foreach ($questionIds as $i => $qId) {
+            if (!array_key_exists($qId, $answers)) {
+                $pending[] = $i;
+            }
+        }
+
+        // Todas respondidas → finaliza
+        if (empty($pending)) {
             return redirect()->route('simulado.resultado');
+        }
+
+        // Próxima questão preferencial: a seguinte ao índice atual
+        $nextIndex = null;
+        foreach ($pending as $i) {
+            if ($i > $index) { $nextIndex = $i; break; }
+        }
+
+        // Se não houver nenhuma depois, pega a primeira pendente (wrap-around)
+        if ($nextIndex === null) {
+            $nextIndex = $pending[0];
+        }
+
+        // Wrap-around = usuário chegou ao fim mas há pendências anteriores
+        $wrappedAround = $nextIndex <= $index;
+        $pendingCount  = count($pending);
+
+        if ($wrappedAround) {
+            $msg = $pendingCount === 1
+                ? 'Você ainda possui 1 questão pendente no simulado.'
+                : "Você ainda possui {$pendingCount} questões pendentes no simulado.";
+            return redirect()
+                ->route('simulado.show', ['index' => $nextIndex])
+                ->with('warning', $msg);
         }
 
         return redirect()->route('simulado.show', ['index' => $nextIndex]);
     }
 
+    // ── PONTO 3: Persiste histórico ao finalizar ──────────────
     public function resultado()
     {
         $simulado = session('simulado');
@@ -134,12 +164,7 @@ class SimuladoController extends Controller
 
             if ($acertou) $corretas++;
 
-            $results[] = [
-                'question' => $question,
-                'chosen'   => $chosen,
-                'correct'  => $correct,
-                'acertou'  => $acertou,
-            ];
+            $results[] = compact('question', 'chosen', 'correct', 'acertou');
         }
 
         $total      = count($results);
@@ -147,6 +172,17 @@ class SimuladoController extends Controller
         $elapsed    = now()->timestamp - $simulado['started_at'];
         $tempoGasto = gmdate('H:i:s', min($elapsed, $simulado['duration']));
 
+        // Persiste no banco para o Histórico
+        SimuladoHistory::create([
+            'user_id'         => auth()->id(),
+            'total_questions' => $total,
+            'correct_answers' => $corretas,
+            'time_spent'      => min($elapsed, $simulado['duration']),
+            'question_ids'    => $questionIds,
+            'answers'         => $answers,
+        ]);
+
+        // Atualiza stats de sessão (mantém compatibilidade com dashboard)
         $stats = session('simulado_stats', ['total_respondidas' => 0, 'total_corretas' => 0]);
         $stats['total_respondidas'] += $total;
         $stats['total_corretas']    += $corretas;

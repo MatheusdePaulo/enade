@@ -29,8 +29,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/simulado/questao/{index}',            [SimuladoController::class, 'show'])->name('simulado.show')->where('index', '[0-9]+');
     Route::post('/simulado/questao/{index}/responder', [SimuladoController::class, 'responder'])->name('simulado.responder')->where('index', '[0-9]+');
 
-    Route::get('/desempenho', [DesempenhoController::class, 'index'])->name('desempenho.index');
-    Route::get('/historico',  [HistoricoController::class,  'index'])->name('historico.index');
+    Route::get('/desempenho',          [DesempenhoController::class, 'index'])->name('desempenho.index');
+    Route::get('/historico',           [HistoricoController::class,  'index'])->name('historico.index');
+    Route::get('/historico/{history}', [HistoricoController::class,  'show'])->name('historico.show');
 
     // Fórum
     Route::get('/forum',              [ForumController::class, 'index'])->name('forum.index');
