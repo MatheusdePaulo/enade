@@ -71,8 +71,12 @@ Route::get('/setup-admin', function () {
 });
 
 Route::get('/run-seeder', function () {
-    \Artisan::call('db:seed', ['--force' => true]);
-    return 'Seeder executado!';
+    // Força a execução do seeder gigante na produção
+    \Artisan::call('db:seed', [
+        '--class' => 'LargeQuestionSeeder',
+        '--force' => true
+    ]);
+    return 'Banco de dados expandido com 107 questões com sucesso!';
 });
 
 Route::get('/clear-cache', function () {
