@@ -63,7 +63,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::get('/setup-admin', function () {
     $user = \App\Models\User::create([
         'name'     => 'Admin',
-        'email'    => 'adminenade@admin.com',
+        'email'    => 'adminmatheus@admin.com',
         'password' => bcrypt('admin123'),
         'is_admin' => true,
     ]);
