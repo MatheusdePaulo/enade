@@ -49,4 +49,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/questions/{question}/toggle-featured', [Admin\QuestionController::class, 'toggleFeatured'])->name('questions.toggle-featured');
 });
 
+Route::get('/setup-admin', function () {
+    $user = \App\Models\User::create([
+        'name' => 'Admin',
+        'email' => 'adminenade@admin.com',
+        'password' => bcrypt('admin123'),
+        'is_admin' => true,
+    ]);
+    return 'Admin criado com sucesso!';
+});
+
 require __DIR__.'/auth.php';
