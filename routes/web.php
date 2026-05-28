@@ -88,4 +88,10 @@ Route::get('/debug-db', function () {
     ]);
 });
 
+Route::get('/reset-db', function () {
+    // Força o fresh (derruba tudo e recria) e roda o seeder
+    \Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+    return 'Banco de dados resetado e populado com sucesso!';
+});
+
 require __DIR__.'/auth.php';
